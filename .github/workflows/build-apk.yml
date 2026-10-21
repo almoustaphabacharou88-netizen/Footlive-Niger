@@ -1,0 +1,49 @@
+name: Build FootLive Niger APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'app_source/**'
+      - '.github/workflows/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get source code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Create Android project
+        run: flutter create --project-name footlive_niger --platforms android build_work
+
+      - name: Copy app source
+        run: |
+          cp app_source/pubspec.yaml build_work/pubspec.yaml
+          mkdir -p build_work/lib
+          cp app_source/lib/main.dart build_work/lib/main.dart
+
+      - name: Get dependencies and build APK
+        working-directory: build_work
+        run: |
+          flutter pub get
+          flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: footlive-niger-apk
+          path: build_work/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
